@@ -7,12 +7,32 @@ const {
     GraphQLInt,
     GraphQLObjectType,
     GraphQLList,
-    GraphQLSchema
+    GraphQLSchema,
+    GraphQLInputObjectType
 } = graphql
 
 
 const UserType = new GraphQLObjectType({
     name: 'User',
+    fields: () => ({
+        id: { type: GraphQLID },
+        name: { type: GraphQLString },
+        age: { type: GraphQLInt },
+        email: { type: GraphQLString }
+    })
+})
+
+const UserInputType = new GraphQLInputObjectType({
+    name: "UserInput",
+    fields: () => ({
+        name: { type: GraphQLString },
+        age: { type: GraphQLInt },
+        email: { type: GraphQLString }
+    })
+})
+
+const UserCreateInputType = new GraphQLInputObjectType({
+    name: "UserCreateInputType",
     fields: () => ({
         id: { type: GraphQLID },
         name: { type: GraphQLString },
@@ -49,15 +69,13 @@ const Mutation = new GraphQLObjectType({
         createUser: {
             type: UserType,
             args: {
-                name: { type: GraphQLString },
-                email: { type: GraphQLString },
-                age: { type: GraphQLInt },
+                input: { type: UserInputType }
             },
-            async resolve(parent, args) {
+            async resolve(_, { input }) {
                 const user = new User({
-                    name: args.name,
-                    email: args.email,
-                    age: args.age
+                    name: input.name,
+                    email: input.email,
+                    age: input.age
                 })
                 return await user.save();
             }
@@ -65,37 +83,37 @@ const Mutation = new GraphQLObjectType({
         updateUser: {
             type: UserType,
             args: {
-                id:{type:GraphQLID},
+                id: { type: GraphQLID },
                 name: { type: GraphQLString },
                 email: { type: GraphQLString },
                 age: { type: GraphQLInt },
             },
             async resolve(parent, args) {
                 const user = await User.findByIdAndUpdate(args.id, {
-                    name : args.name,
-                    email : args.email,
-                    age : args.age
-                },{new:true});
+                    name: args.name,
+                    email: args.email,
+                    age: args.age
+                }, { new: true });
 
                 return user;
             }
         },
-        deleteUser:{
-            type:UserType,
-            args:{
-                id:{type:GraphQLID}
+        deleteUser: {
+            type: UserType,
+            args: {
+                id: { type: GraphQLID }
             },
-            async resolve(parent,args){
-                const user=await User.findByIdAndDelete(args.id)
+            async resolve(parent, args) {
+                const user = await User.findByIdAndDelete(args.id)
                 return user;
             }
         }
     }
 })
 
-module.exports=new GraphQLSchema({
-    query:RootQuery,
-    mutation:Mutation
+module.exports = new GraphQLSchema({
+    query: RootQuery,
+    mutation: Mutation
 })
 
 // mutation{
